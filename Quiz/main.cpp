@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <conio.h>
-#include<algorithm>
+#include <algorithm>
 using namespace std;
 
 struct player{
@@ -15,6 +15,7 @@ bool sortDescending(player a, player b){
 	else 
 		return false;
 }
+
 int main() {
 
     vector<player> players;
@@ -60,7 +61,7 @@ int main() {
 	        
 	        //Declare once and use multiple times to save memory
 	        int score = 0;
-	        string answer = "";
+	        string answer = ""; 
 	        
 	        //"Quiz Header"
 			cout << "Quiz questions:" << endl;
