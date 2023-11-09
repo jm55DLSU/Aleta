@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+/Supermarket_Java/Supermarket/nbproject/private/
+/Supermarket_Java/Test_Supermarket_Java/nbproject/private/
+/Supermarket_Java/Supermarket/build/
