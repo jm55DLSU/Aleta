@@ -6,6 +6,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+import Models.*;
+
 public class SQL {
     private final String DB_URL_INIT = "jdbc:mysql://localhost/"; //For cases when you build a new DB.
     private final String DB_URL = "jdbc:mysql://localhost/Grocery";
@@ -25,62 +27,80 @@ public class SQL {
         } 
     }
 
-    public ArrayList<String[]> generateProducts(){
-        ArrayList<String[]> products = new ArrayList<>();
-        products.add(new String[]{"Mismo Coke", "20.0", "10"});
-        products.add(new String[]{"Mountain Dew", "20.0", "15"});
-        products.add(new String[]{"Royal", "20.0", "5"});
-        products.add(new String[]{"Sprite", "20.0", "12"});
-        products.add(new String[]{"Piattos", "17.0", "8"});
-        products.add(new String[]{"Nova", "17.0", "20"});
+    public ArrayList<Product> generateProducts(){
+        ArrayList<Product> products = new ArrayList<>();
+        products.add(new Product("Mismo Coke", 20.00, 10));
+        //... Continue these
+        products.add(new Product("Mountain Dew", 20.0, 15));
+        products.add(new Product("Royal", 20.0, 5));
+        products.add(new Product("Sprite", 20.0, 12));
+        products.add(new Product("Piattos", 17.0, 8));
+        products.add(new Product("Nova", 17.0, 20));
         return products;
     }
 
-    public ArrayList<String[]> generateUsers(){
-        ArrayList<String[]> users = new ArrayList<>();
-        users.add(new String[]{"admin", "admin", "0"});
-        users.add(new String[]{"juan", "juan", "1"});
+    public ArrayList<User> generateUsers(){
+        ArrayList<User> users = new ArrayList<>();
+        users.add(new User("admin", "admin", 0, "Administrator", "Manila"));
+        users.add(new User("juan", "juan", 1, "Juan Dela Cruz", "Manila, Philippines"));
         return users;
     }
-
-    public void addUser(String username, String password, int type){
-        String sampleWriteDB = "INSERT INTO user(username, password, type) VALUES(?,?,?)"; //Custom Command
-        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);) {	  
-            //PREPARED STATEMENT EXAMPLE
-            PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
-            pstmt.setString(3, (type+""));
-            int result = pstmt.executeUpdate();
-            if(result == 0){
-                System.out.println("User Not Added!");
-            }else{
-                System.out.println("User Added!");
-            }
-        } catch (Exception e) {
-            //e.printStackTrace();
-        }
-    }
     
-    public ArrayList<String[]> getAllProducts(){
+    public ArrayList<Product> getAllProducts(){
         String sampleReadDB = "select * from products"; //Custom Command
-        ArrayList<String[]> products = new ArrayList<>();
+        ArrayList<Product> products = new ArrayList<>();
         try(
                 Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
                 Statement stmt = conn.createStatement(); //<== For permanent sql commands
                 ResultSet rs = stmt.executeQuery(sampleReadDB)) {	//ResultSet if may output or return value from db  
             System.out.println("Connected database successfully...");
             while (rs.next()) {   
-                products.add(new String[]{rs.getString("ProdName"), rs.getString("Price"),rs.getString("Stocks")});
+                products.add(new Product(rs.getString("ProdName"), rs.getDouble("Price"),rs.getInt("Stocks")));
             }
         } catch (Exception e) {
            //e.printStackTrace();
         }
         return products;
     }
-    
-    //0 = employee, 1 = client, -1 = invalid
-    public int checkCredential(String username, String password){
+
+    public ArrayList<User> getAllUsers(){
+        String sampleReadDB = "select * from user"; //Custom Command
+        ArrayList<User> users = new ArrayList<>();
+        try(
+                Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+                Statement stmt = conn.createStatement(); //<== For permanent sql commands
+                ResultSet rs = stmt.executeQuery(sampleReadDB)) {	//ResultSet if may output or return value from db  
+            System.out.println("Connected database successfully...");
+            while (rs.next()) {   
+                users.add(new User(rs.getString("username"), rs.getString("password"), rs.getInt("type"), rs.getString("name"), rs.getString("address")));
+            }
+        } catch (Exception e) {
+           //e.printStackTrace();
+        }
+        return users;
+    }
+
+    public Product getProduct(String name){
+        name = name.replace(" ", ""); //removes whitespaces
+        String sampleReadDB = "SELECT * from products where prodname=?"; //Custom Command
+        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {	//ResultSet if may output or return value from db  
+            System.out.println("Connected database successfully...");
+            PreparedStatement pstmt = conn.prepareStatement(sampleReadDB); //<== For permanent sql commands
+            pstmt.setString(1, name);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {   
+                return new Product(rs.getString("prodname"), rs.getDouble("price"), rs.getInt("stocks")); //either 0/1
+            }
+        } catch (Exception e) {
+           e.printStackTrace();
+           return null;
+        }
+        return null; //invalid or error
+    }
+
+    public User getUser(String username, String password){
+        username = username.replace(" ", "");
+        password = password.replace(" ", "");
         String sampleReadDB = "SELECT * from user where username=? and password=?"; //Custom Command
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {	//ResultSet if may output or return value from db  
             System.out.println("Connected database successfully...");
@@ -89,16 +109,33 @@ public class SQL {
             pstmt.setString(2, password);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {   
-                return Integer.parseInt(rs.getString("type")); //either 0/1
+                return new User(rs.getString("username"), rs.getString("password"), rs.getInt("type"), rs.getString("name"), rs.getString("address")); //either 0/1
             }
         } catch (Exception e) {
            //e.printStackTrace();
+           return null;
         }
-        return -1; //invalid or error
+        return null; //invalid or error
+    }
+
+    public void buildDB(){
+        String sampleWriteDB = "Create Database Grocery"; //Custom Command
+        try(Connection conn = DriverManager.getConnection(DB_URL_INIT, USER, PASS);) {	  
+            //PREPARED STATEMENT EXAMPLE
+            PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
+            int result = pstmt.executeUpdate();
+            if(result != 0){
+                System.out.println("DB Made!");
+            }else{
+                System.out.println("DB Not Made!");
+            }
+        } catch (Exception e) {
+            //e.printStackTrace();
+        }
     }
 
     public void buildUserTable(){
-        String buildTable = "Create table user(username char(20) primary key, password char(20), type int(1))"; //Custom Command
+        String buildTable = "Create table user(username char(20) primary key, password char(20), type int(1), name char(50), address char(100))"; //Custom Command
         int result = 0;
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);){
                 PreparedStatement pstmt = conn.prepareStatement(buildTable); //<== Useful if may specific query (i.e., yung ?); Although pwede rin sa permanent commands.
@@ -130,7 +167,7 @@ public class SQL {
     }
     
     public void buildTransactionTable(){
-        String buildTransaction = "create table transactions(Buyer char(20) primary key, Subtotal decimal(6,2), Items int(5));"; //Custom Command
+        String buildTransaction = "create table transactions(Buyer char(20) primary key, Subtotal decimal(6,2), Items int(5), OrderDateTime timestamp);"; //Custom Command
         int result = 0;
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);){
                 PreparedStatement pstmt = conn.prepareStatement(buildTransaction);
@@ -145,7 +182,8 @@ public class SQL {
         }
     }
     
-    public void addProduct(String prodname, double price, int stocks){
+    //Changed to int to allow indication for success or fail
+    private boolean addProduct(String prodname, double price, int stocks){
         String sampleWriteDB = "INSERT INTO products(Prodname, price, stocks) VALUES(?,?,?)"; //Custom Command
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);) {	  
             //PREPARED STATEMENT EXAMPLE
@@ -156,33 +194,51 @@ public class SQL {
             int result = pstmt.executeUpdate();
             if(result == 0){
                 System.out.println("Product Not Added!");
+                return false;
             }else{
                 System.out.println("Product Added!");
+                return true;
             }
         } catch (Exception e) {
-            //e.printStackTrace();
+            return false;
         }
     }
+
+    public boolean addProduct(Product p){
+        return addProduct(p.getName(), p.getPrice(), p.getQuantity());
+    }
     
-    public void buildDB(){
-        String sampleWriteDB = "Create Database Grocery"; //Custom Command
-        try(Connection conn = DriverManager.getConnection(DB_URL_INIT, USER, PASS);) {	  
+    private boolean addUser(String username, String password, int type, String name, String address){
+        String sampleWriteDB = "INSERT INTO user(username, password, type, name, address) VALUES(?,?,?,?,?)"; //Custom Command
+        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);) {	  
             //PREPARED STATEMENT EXAMPLE
             PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+            pstmt.setString(3, (type+""));
+            pstmt.setString(4, name);
+            pstmt.setString(5, address);
             int result = pstmt.executeUpdate();
-            if(result != 0){
-                System.out.println("DB Made!");
+            if(result == 0){
+                System.out.println("User Not Added!");
+                return false;
             }else{
-                System.out.println("DB Not Made!");
+                System.out.println("User Added!");
+                return true;
             }
         } catch (Exception e) {
             //e.printStackTrace();
+            return false;
         }
+    }
+
+    public boolean addUser(User u){
+        return addUser(u.getUsername(), u.getPassword(), u.getType(), u.getName(), u.getAddress());
     }
     
     public void addTransaction(String buyer, double subtotal, int quantity){
         System.out.println("Add Transaction...");
-        String sampleWriteDB = "INSERT INTO transactions(buyer, subtotal, items) VALUES(?,?,?)"; //Custom Command
+        String sampleWriteDB = "INSERT INTO transactions(buyer, subtotal, items, OrderDateTime) VALUES(?,?,?,?)"; //Custom Command
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);) {	  
             //PREPARED STATEMENT EXAMPLE
             System.out.println("Preparing Statement...");
@@ -190,6 +246,7 @@ public class SQL {
             pstmt.setString(1, buyer);
             pstmt.setString(2, (subtotal + ""));
             pstmt.setString(3, (quantity + ""));
+            pstmt.setTimestamp(4, new java.sql.Timestamp(java.util.Calendar.getInstance().getTimeInMillis()));
             System.out.println("Executing Statement...");
             if(pstmt.executeUpdate() == 0){
                 System.out.println("Transaction Not Added!");
@@ -200,5 +257,15 @@ public class SQL {
         } catch (Exception e) {
             //e.printStackTrace();
         }
+    }
+
+    //0 = employee, 1 = client, -1 = invalid;
+    //It is okay not to convert it to user as it only contains 2 values
+    public int checkCredential(String username, String password){
+        User u = getUser(username, password);
+        if (u == null)
+            return -1;
+        else
+            return u.getType();
     }
 }

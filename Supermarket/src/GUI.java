@@ -44,7 +44,7 @@ public class GUI extends JFrame {
     }
 
     public void switchToCustomerPage(String username){
-        customerPage = new Customer(c, username);
+        customerPage = new Customer(c, username, c.getProducts());
         getContentPane().removeAll();
         getContentPane().add(customerPage);
         revalidate();
