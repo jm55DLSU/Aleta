@@ -44,6 +44,10 @@ public class Product {
         return this.quantity;
     }
 
+    public double getSubtotal(){
+        return this.quantity * this.price;
+    }
+
     public String getSummary(){
         return this.name + " - Php " + this.price + " @ " + this.quantity + "pc(s).";
     }

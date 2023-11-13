@@ -169,4 +169,8 @@ public class Customer extends javax.swing.JPanel{
         for(int i = 0; i < products.size(); i++)
             cartListText.append(products.get(i).getSummary() + "\n");
     }
+
+    public void clearCart(){
+        cartListText.setText("");
+    }
 }

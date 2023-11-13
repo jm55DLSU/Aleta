@@ -1,16 +1,14 @@
 package Views;
 
-import java.awt.*;
 import java.awt.event.ActionListener;
 
 import javax.swing.*;
-import Views.Values;
 
 public class Login extends javax.swing.JPanel{
     JLabel title, usernameLabel, passwordLabel;
     JTextField username;
     JPasswordField password;
-    JButton login, exit;
+    JButton login, signup, exit;
 
     public Login(ActionListener ac){ //Constructor
         setLayout(null);
@@ -50,9 +48,17 @@ public class Login extends javax.swing.JPanel{
         password.setFont(v.inputFont);
         add(password);
 
+        signup = new JButton();
+        signup.setFont(v.btnFont);
+        signup.setBounds(120, 400, 160, 40);
+        signup.setText("Signup");
+        signup.addActionListener(ac);
+        signup.setActionCommand("signupCommand");
+        add(signup);
+
         login = new JButton();
         login.setFont(v.btnFont);
-        login.setBounds(100+120, 400, 200, 40);
+        login.setBounds(120+(120*1)+60, 400, 160, 40);
         login.setText("Login");
         login.addActionListener(ac);
         login.setActionCommand("loginCommand");
@@ -60,7 +66,7 @@ public class Login extends javax.swing.JPanel{
 
         exit = new JButton();
         exit.setFont(v.btnFont);
-        exit.setBounds(100+150+200, 400, 200, 40);
+        exit.setBounds(120+(120*2)+(60*2), 400, 160, 40);
         exit.setText("Exit");
         exit.addActionListener(ac);
         exit.setActionCommand("exitCommand");

@@ -1,6 +1,10 @@
 import java.util.ArrayList;
 
+import Drivers.Controller;
+import Drivers.GUI;
+import Drivers.SQL;
 import Models.*;
+import Views.Popup;
 
 public class Supermarket {
     public static void main(String[] args) {
@@ -9,8 +13,8 @@ public class Supermarket {
             SQL sql = new SQL();
             sql.buildDB();
             sql.buildProductTable();
-            sql.buildTransactionTable();
             sql.buildUserTable();
+            sql.buildTransactionTable();
 
             //Testing SQL calls
             ArrayList<Product> products = sql.generateProducts();
@@ -28,8 +32,8 @@ public class Supermarket {
         Controller c = new Controller(g);
 
         g.setVisible(true);
-        //g.switchToLogin();
-        g.switchToCustomerPage("johndoe");
+        g.switchToLogin();
+        //g.switchToCustomerPage("johndoe");
     }
 }
 

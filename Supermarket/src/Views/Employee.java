@@ -128,11 +128,17 @@ public class Employee extends javax.swing.JPanel{
         return name.getText();
     }
 
-    public String getProductPrice(){
-        return price.getText();
+    public double getProductPrice(){
+        return Double.parseDouble(price.getText());
     }
 
-    public String getProductQuantity(){
-        return quantity.getText();
+    public int getProductQuantity(){
+        return Integer.parseInt(quantity.getText());
+    }
+
+    public void setProductInfo(Product p){
+        name.setText(p.getName());
+        price.setText(p.getPrice()+"");
+        quantity.setText(p.getQuantity()+"");
     }
 }

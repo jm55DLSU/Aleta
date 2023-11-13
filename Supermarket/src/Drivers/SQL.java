@@ -1,3 +1,4 @@
+package Drivers;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -47,15 +48,15 @@ public class SQL {
     }
     
     public ArrayList<Product> getAllProducts(){
-        String sampleReadDB = "select * from products"; //Custom Command
+        String sampleReadDB = "SELECT * from products"; //Custom Command
         ArrayList<Product> products = new ArrayList<>();
         try(
                 Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
                 Statement stmt = conn.createStatement(); //<== For permanent sql commands
                 ResultSet rs = stmt.executeQuery(sampleReadDB)) {	//ResultSet if may output or return value from db  
-            System.out.println("Connected database successfully...");
+            System.out.println("Successfully Connected to DB");
             while (rs.next()) {   
-                products.add(new Product(rs.getString("ProdName"), rs.getDouble("Price"),rs.getInt("Stocks")));
+                products.add(new Product(rs.getString("prodname"), rs.getDouble("price"),rs.getInt("Stocks")));
             }
         } catch (Exception e) {
            //e.printStackTrace();
@@ -64,13 +65,13 @@ public class SQL {
     }
 
     public ArrayList<User> getAllUsers(){
-        String sampleReadDB = "select * from user"; //Custom Command
+        String sampleReadDB = "SELECT * from user"; //Custom Command
         ArrayList<User> users = new ArrayList<>();
         try(
-                Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
-                Statement stmt = conn.createStatement(); //<== For permanent sql commands
-                ResultSet rs = stmt.executeQuery(sampleReadDB)) {	//ResultSet if may output or return value from db  
-            System.out.println("Connected database successfully...");
+            Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+            Statement stmt = conn.createStatement(); //<== For permanent sql commands
+            ResultSet rs = stmt.executeQuery(sampleReadDB)) {	//ResultSet if may output or return value from db  
+            System.out.println("Successfully Connected to DB");
             while (rs.next()) {   
                 users.add(new User(rs.getString("username"), rs.getString("password"), rs.getInt("type"), rs.getString("name"), rs.getString("address")));
             }
@@ -80,13 +81,13 @@ public class SQL {
         return users;
     }
 
-    public Product getProduct(String name){
-        name = name.replace(" ", ""); //removes whitespaces
+    public Product getProduct(String string){
+        string = string.strip();
         String sampleReadDB = "SELECT * from products where prodname=?"; //Custom Command
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {	//ResultSet if may output or return value from db  
-            System.out.println("Connected database successfully...");
+            System.out.println("Successfully Connected to DB");
             PreparedStatement pstmt = conn.prepareStatement(sampleReadDB); //<== For permanent sql commands
-            pstmt.setString(1, name);
+            pstmt.setString(1, string);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {   
                 return new Product(rs.getString("prodname"), rs.getDouble("price"), rs.getInt("stocks")); //either 0/1
@@ -103,7 +104,7 @@ public class SQL {
         password = password.replace(" ", "");
         String sampleReadDB = "SELECT * from user where username=? and password=?"; //Custom Command
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {	//ResultSet if may output or return value from db  
-            System.out.println("Connected database successfully...");
+            System.out.println("Successfully Connected to DB");
             PreparedStatement pstmt = conn.prepareStatement(sampleReadDB); //<== For permanent sql commands
             pstmt.setString(1, username);
             pstmt.setString(2, password);
@@ -118,8 +119,18 @@ public class SQL {
         return null; //invalid or error
     }
 
+    public boolean usernameExists(String username){
+        username = username.strip();
+        ArrayList<User> users = getAllUsers();
+        for(int i = 0; i < users.size(); i++){
+            if(users.get(i).getUsername().equals(username))
+                return true;
+        }
+        return false;
+    }
+
     public void buildDB(){
-        String sampleWriteDB = "Create Database Grocery"; //Custom Command
+        String sampleWriteDB = "CREATE Database Grocery"; //Custom Command
         try(Connection conn = DriverManager.getConnection(DB_URL_INIT, USER, PASS);) {	  
             //PREPARED STATEMENT EXAMPLE
             PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
@@ -135,7 +146,8 @@ public class SQL {
     }
 
     public void buildUserTable(){
-        String buildTable = "Create table user(username char(20) primary key, password char(20), type int(1), name char(50), address char(100))"; //Custom Command
+        //every user has a userID that autoincrements as well as a username that is unique
+        String buildTable = "CREATE table user(userID int(6) auto_increment primary key, username char(20) unique, password char(20), type int(1), name char(50), address char(100))"; //Custom Command
         int result = 0;
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);){
                 PreparedStatement pstmt = conn.prepareStatement(buildTable); //<== Useful if may specific query (i.e., yung ?); Although pwede rin sa permanent commands.
@@ -151,7 +163,7 @@ public class SQL {
     }
 
     public void buildProductTable(){
-        String buildTable = "Create table products(ProdName char(20) primary key, Price decimal(6,2), Stocks int(5))"; //Custom Command
+        String buildTable = "CREATE table products(prodID int(6) auto_increment primary key, prodname char(20), price decimal(6,2), Stocks int(5))"; //Custom Command
         int result = 0;
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);){
                 PreparedStatement pstmt = conn.prepareStatement(buildTable); //<== Useful if may specific query (i.e., yung ?); Although pwede rin sa permanent commands.
@@ -167,7 +179,8 @@ public class SQL {
     }
     
     public void buildTransactionTable(){
-        String buildTransaction = "create table transactions(Buyer char(20) primary key, Subtotal decimal(6,2), Items int(5), OrderDateTime timestamp);"; //Custom Command
+        //every transaction has a unique transactID that is autoincrementing and is the primary key
+        String buildTransaction = "CREATE table transactions(transactID int(6) not null auto_increment, buyer char(20), subtotal double(99,2), items int(5), orderdatetime timestamp, PRIMARY KEY (transactID));"; //Custom Command
         int result = 0;
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);){
                 PreparedStatement pstmt = conn.prepareStatement(buildTransaction);
@@ -178,7 +191,7 @@ public class SQL {
                     System.out.println("Transaction Table Added!");
                 }
         } catch (Exception e) {
-            //e.printStackTrace();
+            e.printStackTrace();
         }
     }
     
@@ -202,6 +215,56 @@ public class SQL {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private boolean editProduct(String prodname, double price, int quantity){
+        //UPDATE table_name SET column_name1= value1, column_name2= value2 WHERE condition;
+        String sampleWriteDB = "UPDATE products set stocks=?, price=? WHERE prodname=?"; //Custom Command
+        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);) {	  
+            //PREPARED STATEMENT EXAMPLE
+            PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
+            pstmt.setInt(1, quantity);
+            pstmt.setDouble(2, price);
+            pstmt.setString(3,prodname);
+            int result = pstmt.executeUpdate();
+            if(result == 0){
+                System.out.println("Product Not Edited!");
+                return false;
+            }else{
+                System.out.println("Product Edited!");
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }  
+    
+    public boolean removeProduct(String prodname) {
+        String sampleWriteDB = "DELETE FROM products WHERE Prodname=?";
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {
+            PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
+            pstmt.setString(1, prodname);
+            int result = pstmt.executeUpdate();
+            return result > 0; // Returns true if at least one row was deleted
+        } catch (Exception e) {
+            // Handle exceptions
+            return false; // Return false in case of an exception
+        }
+    }
+
+    public boolean removeProduct(Product p){
+        return removeProduct(p.getName());
+    }
+
+    public boolean editProduct(Product p){
+        return editProduct(p.getName(), p.getPrice(), p.getQuantity());
+    }
+
+    public boolean deductProduct(Product p, int deductQuantity){
+        //This version of code is a basic one. It assumes no concurrency in database operations which is a whole different topic beyond OOP.
+        Product reference = getProduct(p.getName());
+        return editProduct(reference.getName(), reference.getPrice(), reference.getQuantity()-deductQuantity);
     }
 
     public boolean addProduct(Product p){
@@ -236,7 +299,32 @@ public class SQL {
         return addUser(u.getUsername(), u.getPassword(), u.getType(), u.getName(), u.getAddress());
     }
     
+
+    private boolean searchProduct(String prodname) {
+        String sampleReadDB = "SELECT * FROM products WHERE prodname=?";
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {
+            PreparedStatement pstmt = conn.prepareStatement(sampleReadDB);
+            pstmt.setString(1, prodname);
+            ResultSet resultSet = pstmt.executeQuery();
+    
+            // Process the resultSet if needed
+            // For example, you might iterate through the result set and print the values
+    
+            // For simplicity, let's just return true if any result is found
+            return resultSet.next();
+        } catch (Exception e) {
+            // Handle exceptions (e.g., SQLException)
+            //e.printStackTrace(); // Print the exception details for debugging purposes
+            return false; // Return false in case of an exception
+        }
+    }
+
+    public boolean searchProduct(Product p){
+        return searchProduct(p.getName());
+    }
+    
     public void addTransaction(String buyer, double subtotal, int quantity){
+        //Note that this does not list the specific items of
         System.out.println("Add Transaction...");
         String sampleWriteDB = "INSERT INTO transactions(buyer, subtotal, items, OrderDateTime) VALUES(?,?,?,?)"; //Custom Command
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);) {	  
@@ -244,8 +332,8 @@ public class SQL {
             System.out.println("Preparing Statement...");
             PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
             pstmt.setString(1, buyer);
-            pstmt.setString(2, (subtotal + ""));
-            pstmt.setString(3, (quantity + ""));
+            pstmt.setDouble(2, subtotal);
+            pstmt.setInt(3, quantity);
             pstmt.setTimestamp(4, new java.sql.Timestamp(java.util.Calendar.getInstance().getTimeInMillis()));
             System.out.println("Executing Statement...");
             if(pstmt.executeUpdate() == 0){
@@ -255,7 +343,7 @@ public class SQL {
             }
             System.out.println("Statement Executed!");
         } catch (Exception e) {
-            //e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
