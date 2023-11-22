@@ -8,19 +8,26 @@ public class Transaction {
     private User buyer;
     private ArrayList<Product> items;
     private int transactID;
+    private double donation;
 
-    public Transaction(int transactID, User buyer, ArrayList<Product> items, Timestamp orderDateTime){
+    public Transaction(int transactID, User buyer, ArrayList<Product> items, Timestamp orderDateTime, double donation){
         this.transactID = transactID;
         this.buyer = buyer;
         this.items = items;
         this.orderDateTime = orderDateTime;
+        this.donation = donation;
     }
 
-    public Transaction(User buyer, ArrayList<Product> items){
+    public Transaction(User buyer, ArrayList<Product> items, double donation){
         this.transactID = -1;
         this.buyer = buyer;
         this.items = items;
         this.orderDateTime = null;
+        this.donation = donation;
+    }
+
+    public double getDonation(){
+        return this.donation;
     }
 
     public int getTransactID(){
@@ -54,7 +61,10 @@ public class Transaction {
     }
 
     public String getSummary(){
-        return "Order Date & Time: " + this.orderDateTime.toString() + "\nTransaction ID: " + this.transactID + "\nQuantity: " + this.getQuantity() + "\nSubtotal: Php" + this.getSubtotal() + "\n\nItems:\n";
+        String orderDateTime = "N/A";
+        if(this.orderDateTime != null)
+            orderDateTime = this.orderDateTime.toString();
+        return "Order Date & Time: " + orderDateTime + "\nTransaction ID: " + this.transactID + "\nQuantity: " + this.getQuantity() + "\nSubtotal: Php" + this.getSubtotal() + "\nDonation: Php" + this.getDonation() + "\n\nItems:\n";
     }
 
     public String getVerboseSummary(){

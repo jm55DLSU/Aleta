@@ -3,8 +3,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-import com.mysql.cj.x.protobuf.MysqlxDatatypes.Array;
-
 import Models.*;
 import Views.*;
 
@@ -112,16 +110,11 @@ public class Controller implements ActionListener {
 
     private void addToCart(){
         System.out.println("Add Cart");
-        if(this.selectedProduct == null){
-            this.selectedProduct = sql.getProduct(this.g.getCustomerPage().getProductName());
-            this.g.getCustomerPage().setProductInfo(this.selectedProduct);
-            if(this.selectedProduct == null)
-                new Popup().warning("Add to Cart", "Product Does Not Exist!");
-            else{
-                selectedProduct.updateQuantity(this.g.getCustomerPage().getProductQuantity()); //<== this won't yet change the contents of DB nor the product list as it is a sampled Product object which will be used to list the productss in the cart.
-                cart.add(selectedProduct);
-            }
-        }else{
+        this.selectedProduct = sql.getProduct(this.g.getCustomerPage().getProductName());
+        this.g.getCustomerPage().setProductInfo(this.selectedProduct);
+        if(this.selectedProduct == null)
+            new Popup().warning("Add to Cart", "Product Does Not Exist!");
+        else{
             selectedProduct.updateQuantity(this.g.getCustomerPage().getProductQuantity()); //<== this won't yet change the contents of DB nor the product list as it is a sampled Product object which will be used to list the productss in the cart.
             cart.add(selectedProduct);
         }
@@ -143,7 +136,7 @@ public class Controller implements ActionListener {
 
     private void checkout(){
         System.out.println("Checkout");
-        Transaction t = new Transaction(loggedUser, cart);
+        Transaction t = new Transaction(loggedUser, cart, new Popup().donation());
         sql.addTransaction(t);
         for(int p = 0; p < cart.size(); p++)
             sql.deductProduct(cart.get(p));

@@ -115,22 +115,6 @@ public class Sales extends javax.swing.JPanel{
         add.setActionCommand("searchSalesCommand");
         add(add);
 
-        // edit = new JButton();
-        // edit.setFont(v.btnFont);
-        // edit.setBounds(800/2+160, 20+(60*2), 200, 40);
-        // edit.setText("Edit");
-        // edit.addActionListener(ac);
-        // edit.setActionCommand("editStockCommand");
-        // add(edit);
-
-        // remove = new JButton();
-        // remove.setFont(v.btnFont);
-        // remove.setBounds(800/2+160, 20+(60*3), 200, 40);
-        // remove.setText("Remove");
-        // remove.addActionListener(ac);
-        // remove.setActionCommand("removeStockCommand");
-        // add(remove);
-
         salesText = new JTextArea();
         salesText.setFont(v.textAreaFont_small);
         salesText.setLineWrap(true);
@@ -148,7 +132,7 @@ public class Sales extends javax.swing.JPanel{
     public void updateSalesList(ArrayList<Transaction> transactions){
         salesText.setText("");
         for(int i = 0; i < transactions.size(); i++)
-            salesText.append(transactions.get(i).getVerboseSummary());
+            salesText.append(transactions.get(i).getVerboseSummary() + "\n");
     }
 
     public void clearSalesList(){

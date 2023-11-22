@@ -4,10 +4,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-
-import com.mysql.cj.x.protobuf.MysqlxDatatypes.Array;
 
 import Models.*;
 
@@ -110,7 +107,7 @@ public class SQL {
 
     public void buildTransactionsTable(){
         String[] sql = new String[4];
-        sql[0] = "CREATE TABLE transactions (transactID int(11) NOT NULL, userID int(11) NOT NULL, subtotal decimal(10,0) NOT NULL, quantity int(11) NOT NULL, orderdatetime timestamp NOT NULL DEFAULT current_timestamp());";
+        sql[0] = "CREATE TABLE transactions (transactID int(11) NOT NULL, userID int(11) NOT NULL, subtotal decimal(10,0) NOT NULL, quantity int(11) NOT NULL, orderdatetime timestamp NOT NULL DEFAULT current_timestamp(), donation decimal(10,0));";
         sql[1] = "ALTER TABLE transactions ADD PRIMARY KEY (transactID), ADD KEY userID (userID);";
         sql[2] = "ALTER TABLE transactions ADD CONSTRAINT transactions_ibfk_1 FOREIGN KEY (userID) REFERENCES users (userID);";
         sql[3] = "ALTER TABLE transactions MODIFY transactID int(11) NOT NULL AUTO_INCREMENT UNIQUE;";
@@ -194,13 +191,14 @@ public class SQL {
             quantity += t.getItems().get(i).getQuantity();
         }
         //Overall receipt
-        String sql = "INSERT INTO transactions(userID, subtotal, quantity) VALUES (?,?,?);";
+        String sql = "INSERT INTO transactions(userID, subtotal, quantity, donation) VALUES (?,?,?,?);";
         Connection c = getConnection();
         try{
             PreparedStatement pStatement = c.prepareStatement(sql, new String[] {"transactID"});
             pStatement.setInt(1, t.getBuyer().getUserID());
             pStatement.setDouble(2, subtotal);
             pStatement.setInt(3, quantity);
+            pStatement.setDouble(4, t.getDonation());
             pStatement.executeUpdate();
             ResultSet rs = pStatement.getGeneratedKeys();
             while (rs.next())
@@ -447,7 +445,7 @@ public class SQL {
             while(rSet.next()){
                 User u = getUser(rSet.getInt("userID"));
                 ArrayList<Product> items = getTransactItemsByTransactProducts(transactID);
-                return new Transaction(rSet.getInt("transactID"), u, items, rSet.getTimestamp("orderdatetime"));
+                return new Transaction(rSet.getInt("transactID"), u, items, rSet.getTimestamp("orderdatetime"), rSet.getDouble("donation"));
             }
             return null;
         } catch(SQLException e){

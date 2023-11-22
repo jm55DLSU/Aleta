@@ -25,6 +25,15 @@ public class Popup {
             return true;
         return false;
     }
+    
+    public double donation(){ 
+        String input = JOptionPane.showInputDialog(null, "Would you like to donate to charity?", "Donation", JOptionPane.QUESTION_MESSAGE);
+        try{
+            return Double.parseDouble(input);
+        }catch(Exception e){
+            return 0;
+        }
+    }
 
     public User newUser(Controller c){
         JTextField username = new JTextField();

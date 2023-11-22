@@ -44,7 +44,7 @@ public class Supermarket {
             cart.add(b); //Retrieve by name
             for(int i = 0; i < cart.size(); i++)
                 cart.get(i).printSummary();
-            Transaction t = new Transaction(u, cart);
+            Transaction t = new Transaction(u, cart, 100);
             sql.addTransaction(t);
             t.printSummary();
             System.out.println("");
