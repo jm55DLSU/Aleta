@@ -8,6 +8,7 @@ public class GUI extends JFrame {
     private Login loginPage;
     private Employee employeePage;
     private Customer customerPage;
+    private Sales salesPage;
 
     public GUI(){
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -23,31 +24,42 @@ public class GUI extends JFrame {
     }
 
     public void switchToLogin(){
-        loginPage = new Login(c);
+        this.loginPage = new Login(c);
         getContentPane().removeAll();
-        getContentPane().add(loginPage);
+        getContentPane().add(this.loginPage);
         revalidate();
     }
 
     public Login getLoginPage(){
-        return loginPage;
+        return this.loginPage;
     }
 
     public void switchToEmployeePage(String username){
-        employeePage = new Employee(c, username, c.getProducts());
+        this.employeePage = new Employee(c, username, c.getProducts());
         getContentPane().removeAll();
-        getContentPane().add(employeePage);
+        getContentPane().add(this.employeePage);
         revalidate();
     }
 
     public Employee getEmployeePage(){
-        return employeePage;
+        return this.employeePage;
+    }
+
+    public void switchToSalesPage(String username){
+        this.salesPage = new Sales(c, username);
+        getContentPane().removeAll();
+        getContentPane().add(this.salesPage);
+        revalidate();
+    }
+
+    public Sales getSalesPage(){
+        return this.salesPage;
     }
 
     public void switchToCustomerPage(String username){
-        customerPage = new Customer(c, username, c.getProducts());
+        this.customerPage = new Customer(c, username, c.getProducts());
         getContentPane().removeAll();
-        getContentPane().add(customerPage);
+        getContentPane().add(this.customerPage);
         revalidate();
     }
 

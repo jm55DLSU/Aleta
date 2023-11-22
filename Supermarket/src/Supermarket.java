@@ -12,20 +12,50 @@ public class Supermarket {
         if(false){
             SQL sql = new SQL();
             sql.buildDB();
-            sql.buildProductTable();
-            sql.buildUserTable();
-            sql.buildTransactionTable();
+            sql.buildUsersTable();
+            sql.buildProductsTable();
+            sql.buildTransactionsTable();
+            sql.buildTransactionItemTable();
 
-            //Testing SQL calls
-            ArrayList<Product> products = sql.generateProducts();
-            for (int i = 0; i < products.size(); i++){
-                sql.addProduct(products.get(i));
+            sql.addUser(new User("admin", "admin", 0, "Test Admin", "Philippines"));
+            sql.addUser(new User("user", "user", 1, "Test Client", "Philippines"));
+            ArrayList<User> users = sql.getUsers();
+            for(int i = 0; i < users.size(); i++){
+                users.get(i).printSummary();
             }
-            ArrayList<User> users = sql.generateUsers();
-            for (int i = 0; i < users.size(); i++){
-                sql.addUser(users.get(i));
+            System.out.println("");
+            
+            sql.addProduct(new Product("Test", 69.69, 1000));
+            sql.addProduct(new Product("Test2", 420.420, 1000));
+            ArrayList<Product> p = sql.getProducts();
+            for(int i = 0; i < p.size(); i++){
+                p.get(i).printSummary();
             }
-            sql.addTransaction("Administrator", 120.00, 10);
+            System.out.println("");
+
+            User u = sql.getUser(2);
+            u.printSummary();
+            Product a = sql.getProduct(1);
+            a.updateQuantity(420);
+            Product b = sql.getProduct("Test2");
+            b.updateQuantity(69);
+            ArrayList<Product> cart = new ArrayList<Product>();
+            cart.add(a); //Retrieve by prodID
+            cart.add(b); //Retrieve by name
+            for(int i = 0; i < cart.size(); i++)
+                cart.get(i).printSummary();
+            Transaction t = new Transaction(u, cart);
+            sql.addTransaction(t);
+            t.printSummary();
+            System.out.println("");
+
+            Transaction tr = sql.getTransaction(1);
+            tr.printVerboseSummary();
+
+            ArrayList<Transaction> ts = sql.getTransactionsByUser(2);
+            for(int i = 0; i < ts.size(); i++){
+                ts.get(i).printVerboseSummary();
+            }
         }
         
         GUI g = new GUI();
@@ -33,7 +63,7 @@ public class Supermarket {
 
         g.setVisible(true);
         g.switchToLogin();
-        //g.switchToCustomerPage("johndoe");
+        // g.switchToCustomerPage("johndoe");
+        // g.switchToSalesPage("johndoe");
     }
 }
-

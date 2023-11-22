@@ -4,8 +4,10 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+
+import com.mysql.cj.x.protobuf.MysqlxDatatypes.Array;
 
 import Models.*;
 
@@ -19,341 +21,513 @@ public class SQL {
         testConnection();
     }
 
+    private Connection getInitialConnection(){
+        try{
+            Connection c = DriverManager.getConnection(DB_URL_INIT, USER, PASS);
+            System.out.println("SQL Connection Success!");
+            return c;
+        } catch (SQLException e){
+            System.out.println("SQL Connection Failed!");
+            System.out.println(e.getMessage());
+            return null;
+        }
+    }
+
+    private Connection getConnection(){
+        try{
+            Connection c = DriverManager.getConnection(DB_URL, USER, PASS);
+            return c;
+        } catch (SQLException e){
+            System.out.println("SQL Connection Failed!");
+            System.out.println(e.getMessage());
+            return null;
+        }
+    }
+
     public void testConnection(){
         System.out.println("Testing SQL Connection...");
-        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);){
-            System.out.println("SQL Connection Success!");
-        } catch (SQLException e) {
-            System.out.println("SQL Connection Failed!");
-        } 
-    }
-
-    public ArrayList<Product> generateProducts(){
-        ArrayList<Product> products = new ArrayList<>();
-        products.add(new Product("Mismo Coke", 20.00, 10));
-        //... Continue these
-        products.add(new Product("Mountain Dew", 20.0, 15));
-        products.add(new Product("Royal", 20.0, 5));
-        products.add(new Product("Sprite", 20.0, 12));
-        products.add(new Product("Piattos", 17.0, 8));
-        products.add(new Product("Nova", 17.0, 20));
-        return products;
-    }
-
-    public ArrayList<User> generateUsers(){
-        ArrayList<User> users = new ArrayList<>();
-        users.add(new User("admin", "admin", 0, "Administrator", "Manila"));
-        users.add(new User("juan", "juan", 1, "Juan Dela Cruz", "Manila, Philippines"));
-        return users;
-    }
-    
-    public ArrayList<Product> getAllProducts(){
-        String sampleReadDB = "SELECT * from products"; //Custom Command
-        ArrayList<Product> products = new ArrayList<>();
-        try(
-                Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
-                Statement stmt = conn.createStatement(); //<== For permanent sql commands
-                ResultSet rs = stmt.executeQuery(sampleReadDB)) {	//ResultSet if may output or return value from db  
-            System.out.println("Successfully Connected to DB");
-            while (rs.next()) {   
-                products.add(new Product(rs.getString("prodname"), rs.getDouble("price"),rs.getInt("Stocks")));
-            }
-        } catch (Exception e) {
-           //e.printStackTrace();
-        }
-        return products;
-    }
-
-    public ArrayList<User> getAllUsers(){
-        String sampleReadDB = "SELECT * from user"; //Custom Command
-        ArrayList<User> users = new ArrayList<>();
-        try(
-            Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
-            Statement stmt = conn.createStatement(); //<== For permanent sql commands
-            ResultSet rs = stmt.executeQuery(sampleReadDB)) {	//ResultSet if may output or return value from db  
-            System.out.println("Successfully Connected to DB");
-            while (rs.next()) {   
-                users.add(new User(rs.getString("username"), rs.getString("password"), rs.getInt("type"), rs.getString("name"), rs.getString("address")));
-            }
-        } catch (Exception e) {
-           //e.printStackTrace();
-        }
-        return users;
-    }
-
-    public Product getProduct(String string){
-        string = string.strip();
-        String sampleReadDB = "SELECT * from products where prodname=?"; //Custom Command
-        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {	//ResultSet if may output or return value from db  
-            System.out.println("Successfully Connected to DB");
-            PreparedStatement pstmt = conn.prepareStatement(sampleReadDB); //<== For permanent sql commands
-            pstmt.setString(1, string);
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {   
-                return new Product(rs.getString("prodname"), rs.getDouble("price"), rs.getInt("stocks")); //either 0/1
-            }
-        } catch (Exception e) {
-           e.printStackTrace();
-           return null;
-        }
-        return null; //invalid or error
-    }
-
-    public User getUser(String username, String password){
-        username = username.replace(" ", "");
-        password = password.replace(" ", "");
-        String sampleReadDB = "SELECT * from user where username=? and password=?"; //Custom Command
-        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {	//ResultSet if may output or return value from db  
-            System.out.println("Successfully Connected to DB");
-            PreparedStatement pstmt = conn.prepareStatement(sampleReadDB); //<== For permanent sql commands
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {   
-                return new User(rs.getString("username"), rs.getString("password"), rs.getInt("type"), rs.getString("name"), rs.getString("address")); //either 0/1
-            }
-        } catch (Exception e) {
-           //e.printStackTrace();
-           return null;
-        }
-        return null; //invalid or error
-    }
-
-    public boolean usernameExists(String username){
-        username = username.strip();
-        ArrayList<User> users = getAllUsers();
-        for(int i = 0; i < users.size(); i++){
-            if(users.get(i).getUsername().equals(username))
-                return true;
-        }
-        return false;
+        getInitialConnection();
     }
 
     public void buildDB(){
-        String sampleWriteDB = "CREATE Database Grocery"; //Custom Command
-        try(Connection conn = DriverManager.getConnection(DB_URL_INIT, USER, PASS);) {	  
-            //PREPARED STATEMENT EXAMPLE
-            PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
-            int result = pstmt.executeUpdate();
-            if(result != 0){
+        String sql = "CREATE DATABASE Grocery"; //Custom Command
+        Connection c = getInitialConnection();
+        try{
+            PreparedStatement pstmt = c.prepareStatement(sql);
+            if(pstmt.executeUpdate() != 0){
                 System.out.println("DB Made!");
             }else{
                 System.out.println("DB Not Made!");
             }
-        } catch (Exception e) {
-            //e.printStackTrace();
-        }
+            c.close();
+        } catch(SQLException e){
+            System.out.println("SQLException occured on buildDB()!");
+            System.out.println(e.getMessage());
+        }   
     }
 
-    public void buildUserTable(){
-        //every user has a userID that autoincrements as well as a username that is unique
-        String buildTable = "CREATE table user(userID int(6) auto_increment primary key, username char(20) unique, password char(20), type int(1), name char(50), address char(100))"; //Custom Command
-        int result = 0;
-        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);){
-                PreparedStatement pstmt = conn.prepareStatement(buildTable); //<== Useful if may specific query (i.e., yung ?); Although pwede rin sa permanent commands.
-                result = pstmt.executeUpdate();
-                if(result != 0){
-                    System.out.println("Product Table Not Added!");
-                }else{
-                    System.out.println("Product Table Added!");
-                }
-        } catch (Exception e) {
-            //e.printStackTrace();
-        }
-    }
-
-    public void buildProductTable(){
-        String buildTable = "CREATE table products(prodID int(6) auto_increment primary key, prodname char(20), price decimal(6,2), Stocks int(5))"; //Custom Command
-        int result = 0;
-        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);){
-                PreparedStatement pstmt = conn.prepareStatement(buildTable); //<== Useful if may specific query (i.e., yung ?); Although pwede rin sa permanent commands.
-                result = pstmt.executeUpdate();
-                if(result != 0){
-                    System.out.println("Product Table Not Added!");
-                }else{
-                    System.out.println("Product Table Added!");
-                }
-        } catch (Exception e) {
-            //e.printStackTrace();
-        }
-    }
-    
-    public void buildTransactionTable(){
-        //every transaction has a unique transactID that is autoincrementing and is the primary key
-        String buildTransaction = "CREATE table transactions(transactID int(6) not null auto_increment, buyer char(20), subtotal double(99,2), items int(5), orderdatetime timestamp, PRIMARY KEY (transactID));"; //Custom Command
-        int result = 0;
-        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);){
-                PreparedStatement pstmt = conn.prepareStatement(buildTransaction);
-                result = pstmt.executeUpdate();
-                if(result != 0){
-                    System.out.println("Transaction Table Not Added!");
-                }else{
-                    System.out.println("Transaction Table Added!");
-                }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    
-    //Changed to int to allow indication for success or fail
-    private boolean addProduct(String prodname, double price, int stocks){
-        String sampleWriteDB = "INSERT INTO products(Prodname, price, stocks) VALUES(?,?,?)"; //Custom Command
-        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);) {	  
-            //PREPARED STATEMENT EXAMPLE
-            PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
-            pstmt.setString(1, prodname);
-            pstmt.setString(2, (price + ""));
-            pstmt.setString(3, (stocks + ""));
-            int result = pstmt.executeUpdate();
-            if(result == 0){
-                System.out.println("Product Not Added!");
-                return false;
-            }else{
-                System.out.println("Product Added!");
-                return true;
+    public void buildUsersTable(){
+        String[] sql = new String[3];
+        sql[0] = "CREATE TABLE users (userID int(11) NOT NULL, username varchar(50) NOT NULL UNIQUE, password varchar(50) NOT NULL, name varchar(100) NOT NULL, address varchar(200) NOT NULL, type INT NOT NULL);";
+        sql[1] = "ALTER TABLE users ADD PRIMARY KEY (userID), ADD KEY userID (userID);";
+        sql[2] = "ALTER TABLE users MODIFY userID int(11) NOT NULL AUTO_INCREMENT UNIQUE;";
+        Connection c = getConnection();
+        try{
+            for(int i = 0; i < sql.length; i++){
+                PreparedStatement pstmt = c.prepareStatement(sql[i]);
+                if(pstmt.executeUpdate() == 0)
+                    System.out.println("Users Table Made!");
+                else
+                    System.out.println("Users Table  Made!");
             }
-        } catch (Exception e) {
-            return false;
+            
+        } catch(SQLException e){
+            System.out.println("SQLException occured on buildUsersTable()!");
+            System.out.println(e.getMessage());
         }
     }
 
-    private boolean editProduct(String prodname, double price, int quantity){
-        //UPDATE table_name SET column_name1= value1, column_name2= value2 WHERE condition;
-        String sampleWriteDB = "UPDATE products set stocks=?, price=? WHERE prodname=?"; //Custom Command
-        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);) {	  
-            //PREPARED STATEMENT EXAMPLE
-            PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
-            pstmt.setInt(1, quantity);
-            pstmt.setDouble(2, price);
-            pstmt.setString(3,prodname);
-            int result = pstmt.executeUpdate();
-            if(result == 0){
-                System.out.println("Product Not Edited!");
-                return false;
-            }else{
-                System.out.println("Product Edited!");
-                return true;
+    public void buildProductsTable(){
+        String[] sql = new String[3];
+        sql[0] = "CREATE TABLE products (prodID int(11) NOT NULL, name varchar(100) NOT NULL UNIQUE, price decimal(10,2) NOT NULL, quantity int(11) NOT NULL);";
+        sql[1] = "ALTER TABLE products ADD PRIMARY KEY (prodID);";
+        sql[2] = "ALTER TABLE products MODIFY prodID int(11) NOT NULL AUTO_INCREMENT UNIQUE;";
+        Connection c = getConnection();
+        try{
+            for(int i = 0; i < sql.length; i++){
+                PreparedStatement pstmt = c.prepareStatement(sql[i]);
+                if(pstmt.executeUpdate() == 0)
+                    System.out.println("Products Table Made!");
+                else
+                    System.out.println("Products Table Not Made!");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }  
-    
-    public boolean removeProduct(String prodname) {
-        String sampleWriteDB = "DELETE FROM products WHERE Prodname=?";
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {
-            PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
-            pstmt.setString(1, prodname);
-            int result = pstmt.executeUpdate();
-            return result > 0; // Returns true if at least one row was deleted
-        } catch (Exception e) {
-            // Handle exceptions
-            return false; // Return false in case of an exception
+            
+        } catch(SQLException e){
+            System.out.println("SQLException occured on buildProductsTable()!");
+            System.out.println(e.getMessage());
         }
     }
 
-    public boolean removeProduct(Product p){
-        return removeProduct(p.getName());
+    public void buildTransactionsTable(){
+        String[] sql = new String[4];
+        sql[0] = "CREATE TABLE transactions (transactID int(11) NOT NULL, userID int(11) NOT NULL, subtotal decimal(10,0) NOT NULL, quantity int(11) NOT NULL, orderdatetime timestamp NOT NULL DEFAULT current_timestamp());";
+        sql[1] = "ALTER TABLE transactions ADD PRIMARY KEY (transactID), ADD KEY userID (userID);";
+        sql[2] = "ALTER TABLE transactions ADD CONSTRAINT transactions_ibfk_1 FOREIGN KEY (userID) REFERENCES users (userID);";
+        sql[3] = "ALTER TABLE transactions MODIFY transactID int(11) NOT NULL AUTO_INCREMENT UNIQUE;";
+        Connection c = getConnection();
+        try{
+            for(int i = 0; i < sql.length; i++){
+                PreparedStatement pstmt = c.prepareStatement(sql[i]);
+                if(pstmt.executeUpdate() == 0)
+                    System.out.println("Transactions Table Made!");
+                else
+                    System.out.println("Transactions Table Not Made!");
+            }
+            
+        } catch(SQLException e){
+            System.out.println("SQLException occured on buildTransactionsTable()!");
+            System.out.println(e.getMessage());
+        }
     }
 
-    public boolean editProduct(Product p){
-        return editProduct(p.getName(), p.getPrice(), p.getQuantity());
-    }
-
-    public boolean deductProduct(Product p, int deductQuantity){
-        //This version of code is a basic one. It assumes no concurrency in database operations which is a whole different topic beyond OOP.
-        Product reference = getProduct(p.getName());
-        return editProduct(reference.getName(), reference.getPrice(), reference.getQuantity()-deductQuantity);
+    public void buildTransactionItemTable(){
+        String[] sql = new String[3];
+        sql[0] = "CREATE TABLE transaction_item (transactID int(11) NOT NULL, prodID int(11) NOT NULL, quantity int(11) NOT NULL, subtotal decimal(10,0) NOT NULL);";
+        sql[1] = "ALTER TABLE transaction_item ADD KEY transactID (transactID,prodID), ADD KEY prodID (prodID);";
+        sql[2] = "ALTER TABLE transaction_item ADD CONSTRAINT transaction_item_ibfk_1 FOREIGN KEY (prodID) REFERENCES products (prodID), ADD CONSTRAINT transaction_item_ibfk_2 FOREIGN KEY (transactID) REFERENCES transactions (transactID);";
+        Connection c = getConnection();
+        try{
+            for(int i = 0; i < sql.length; i++){
+                PreparedStatement pstmt = c.prepareStatement(sql[i]);
+                if(pstmt.executeUpdate() == 0)
+                    System.out.println("Transaction Items Table Made!");
+                else
+                    System.out.println("Transaction Items Table Not Made!");
+            }
+            
+        } catch(SQLException e){
+            System.out.println("SQLException occured on buildTransactionsTable()!");
+            System.out.println(e.getMessage());
+        }
     }
 
     public boolean addProduct(Product p){
-        return addProduct(p.getName(), p.getPrice(), p.getQuantity());
-    }
-    
-    private boolean addUser(String username, String password, int type, String name, String address){
-        String sampleWriteDB = "INSERT INTO user(username, password, type, name, address) VALUES(?,?,?,?,?)"; //Custom Command
-        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);) {	  
-            //PREPARED STATEMENT EXAMPLE
-            PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
-            pstmt.setString(3, (type+""));
-            pstmt.setString(4, name);
-            pstmt.setString(5, address);
-            int result = pstmt.executeUpdate();
-            if(result == 0){
-                System.out.println("User Not Added!");
-                return false;
-            }else{
-                System.out.println("User Added!");
-                return true;
-            }
-        } catch (Exception e) {
-            //e.printStackTrace();
-            return false;
+        String sql = "INSERT INTO products(name, price, quantity) VALUES (?,?,?);";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setString(1, p.getName());
+            pStatement.setDouble(2, p.getPrice());
+            pStatement.setInt(3, p.getQuantity());
+            return !pStatement.execute();
+        } catch(SQLException e){
+            System.out.println("SQLException occured on addProduct()!");
+            System.out.println(e.getMessage());
         }
+        return false;
     }
 
     public boolean addUser(User u){
-        return addUser(u.getUsername(), u.getPassword(), u.getType(), u.getName(), u.getAddress());
+        String sql = "INSERT INTO users(username, password, name, address, type) VALUES (?,?,?,?,?);";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setString(1, u.getUsername());
+            pStatement.setString(2, u.getPassword());
+            pStatement.setString(3, u.getName());
+            pStatement.setString(4, u.getAddress());
+            pStatement.setInt(5, u.getType());
+            return !pStatement.execute();
+        } catch(SQLException e){
+            System.out.println("SQLException occured on addUser()!");
+            System.out.println(e.getMessage());
+        }
+        return false;
     }
-    
 
-    private boolean searchProduct(String prodname) {
-        String sampleReadDB = "SELECT * FROM products WHERE prodname=?";
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {
-            PreparedStatement pstmt = conn.prepareStatement(sampleReadDB);
-            pstmt.setString(1, prodname);
-            ResultSet resultSet = pstmt.executeQuery();
-    
-            // Process the resultSet if needed
-            // For example, you might iterate through the result set and print the values
-    
-            // For simplicity, let's just return true if any result is found
-            return resultSet.next();
-        } catch (Exception e) {
-            // Handle exceptions (e.g., SQLException)
-            //e.printStackTrace(); // Print the exception details for debugging purposes
-            return false; // Return false in case of an exception
+    public void addTransaction(Transaction t){
+        double subtotal = 0;
+        int quantity = 0;
+        int transactID = 0;
+        for(int i = 0; i < t.getItems().size(); i++){
+            subtotal += t.getItems().get(i).getSubtotal();
+            quantity += t.getItems().get(i).getQuantity();
+        }
+        //Overall receipt
+        String sql = "INSERT INTO transactions(userID, subtotal, quantity) VALUES (?,?,?);";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql, new String[] {"transactID"});
+            pStatement.setInt(1, t.getBuyer().getUserID());
+            pStatement.setDouble(2, subtotal);
+            pStatement.setInt(3, quantity);
+            pStatement.executeUpdate();
+            ResultSet rs = pStatement.getGeneratedKeys();
+            while (rs.next())
+                transactID = rs.getInt(1);
+        } catch(SQLException e){
+            System.out.println("SQLException occured on addTransaction() Overall!");
+            System.out.println(e.getMessage());
+        }
+        //Individual items
+        sql = "INSERT INTO transaction_item(transactID, prodID, quantity, subtotal) VALUES(?,?,?,?);";
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setInt(1, transactID);
+            for(int i = 0; i < t.getItems().size(); i++){
+                pStatement.setInt(2, t.getItems().get(i).getProdID());
+                pStatement.setInt(3, t.getItems().get(i).getQuantity());
+                pStatement.setDouble(4, t.getItems().get(i).getSubtotal());
+                pStatement.execute();
+            } 
+        }catch(SQLException e){
+            System.out.println("SQLException occured on addTransaction() Individual!");
+            System.out.println(e.getMessage());
         }
     }
 
-    public boolean searchProduct(Product p){
-        return searchProduct(p.getName());
+    public boolean editProduct(Product p, boolean absolute){
+        String sql = "UPDATE products SET name = ?, price = ?, quantity = ? WHERE prodID = ?;";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setString(1, p.getName());
+            pStatement.setDouble(2, p.getPrice());
+            if(!absolute) // Relative increase/decrease to the current quantity of products
+                pStatement.setInt(3, p.getQuantity() + getProduct(p.getProdID()).getQuantity());
+            else // Absolute change in the quantity of products
+                pStatement.setInt(3, p.getQuantity());
+            pStatement.setInt(4, p.getProdID());
+            int r = pStatement.executeUpdate();
+            if(r > 0)
+                return true;
+        } catch(SQLException e){
+            System.out.println("SQLException occured on editProduct()!");
+            System.out.println(e.getMessage());
+        }
+        return false;
     }
-    
-    public void addTransaction(String buyer, double subtotal, int quantity){
-        //Note that this does not list the specific items of
-        System.out.println("Add Transaction...");
-        String sampleWriteDB = "INSERT INTO transactions(buyer, subtotal, items, OrderDateTime) VALUES(?,?,?,?)"; //Custom Command
-        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);) {	  
-            //PREPARED STATEMENT EXAMPLE
-            System.out.println("Preparing Statement...");
-            PreparedStatement pstmt = conn.prepareStatement(sampleWriteDB);
-            pstmt.setString(1, buyer);
-            pstmt.setDouble(2, subtotal);
-            pstmt.setInt(3, quantity);
-            pstmt.setTimestamp(4, new java.sql.Timestamp(java.util.Calendar.getInstance().getTimeInMillis()));
-            System.out.println("Executing Statement...");
-            if(pstmt.executeUpdate() == 0){
-                System.out.println("Transaction Not Added!");
-            }else{
-                System.out.println("Transaction Added!");
+
+    public boolean deductProduct(Product p){
+        String sql = "UPDATE products SET quantity = ? WHERE prodID = ?;";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setInt(1, getProduct(p.getProdID()).getQuantity()-p.getQuantity());
+            pStatement.setInt(2, p.getProdID());
+            int r = pStatement.executeUpdate();
+            if(r > 0)
+                return true;
+        } catch(SQLException e){
+            System.out.println("SQLException occured on editProduct()!");
+            System.out.println(e.getMessage());
+        }
+        return false;
+    }
+
+    public boolean removeProduct(int prodID){
+        String sql = "DELETE FROM products WHERE prodID=?;";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setInt(1, prodID);
+            return !pStatement.execute();
+        } catch(SQLException e){
+            System.out.println("SQLException occured on editProduct()!");
+            System.out.println(e.getMessage());
+        }
+        return false; 
+    }
+
+    public ArrayList<User> getUsers(){
+        String sql = "SELECT * FROM users";
+        ArrayList<User> list = new ArrayList<User>();
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            ResultSet rSet = pStatement.executeQuery();
+            while(rSet.next()){
+                User u = new User(  rSet.getInt("userID"), rSet.getString("username"), 
+                                    rSet.getString("password"), rSet.getInt("type"), 
+                                    rSet.getString("name"), rSet.getString("address"));
+                list.add(u);
             }
-            System.out.println("Statement Executed!");
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch(SQLException e){
+            System.out.println("SQLException occured on getUsers()!");
+            System.out.println(e.getMessage());
+            return null;
+        }
+        return list;
+    }
+
+    public ArrayList<Product> getProducts(){
+        String sql = "SELECT * FROM products";
+        ArrayList<Product> list = new ArrayList<Product>();
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            ResultSet rSet = pStatement.executeQuery();
+            while(rSet.next()){
+                Product p = new Product(rSet.getInt("prodID"), rSet.getString("name"), rSet.getDouble("price"), rSet.getInt("quantity"));
+                list.add(p);
+            }
+        } catch(SQLException e){
+            System.out.println("SQLException occured on getProducts()!");
+            System.out.println(e.getMessage());
+            return null;
+        }
+        return list;
+    }
+
+    public Product getProduct(int prodID){
+        String sql = "SELECT * FROM products WHERE prodID=?";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setInt(1, prodID);
+            ResultSet rSet = pStatement.executeQuery();
+            while(rSet.next())
+                return new Product(rSet.getInt("prodID"), rSet.getString("name"), rSet.getDouble("price"), rSet.getInt("quantity"));
+        } catch(SQLException e){
+            System.out.println("SQLException occured on getProduct()!");
+            System.out.println(e.getMessage());
+            return null;
+        }
+        return null;
+    }
+
+    public Product getProduct(String name){
+        String sql = "SELECT * FROM products WHERE name=?";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setString(1, name);
+            ResultSet rSet = pStatement.executeQuery();
+            while(rSet.next())
+                return new Product(rSet.getInt("prodID"), rSet.getString("name"), rSet.getDouble("price"), rSet.getInt("quantity"));
+        } catch(SQLException e){
+            System.out.println("SQLException occured on getProduct()!");
+            System.out.println(e.getMessage());
+            return null;
+        }
+        return null;
+    }
+
+    public User getUser(String username){
+        String sql = "SELECT * FROM users WHERE username=?";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setString(1, username);
+            ResultSet rSet = pStatement.executeQuery();
+            while(rSet.next())
+                return new User(rSet.getInt("userID"), rSet.getString("username"), 
+                                rSet.getString("password"), rSet.getInt("type"), 
+                                rSet.getString("name"), rSet.getString("address"));
+        } catch(SQLException e){
+            System.out.println("SQLException occured on getUser()!");
+            System.out.println(e.getMessage());
+            return null;
+        }
+        return null;
+    }
+
+    public User getUser(int userID){
+        String sql = "SELECT * FROM users WHERE userID=?";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setInt(1, userID);
+            ResultSet rSet = pStatement.executeQuery();
+            while(rSet.next())
+                return new User(rSet.getInt("userID"), rSet.getString("username"), 
+                                rSet.getString("password"), rSet.getInt("type"), 
+                                rSet.getString("name"), rSet.getString("address"));
+        } catch(SQLException e){
+            System.out.println("SQLException occured on getUser()!");
+            System.out.println(e.getMessage());
+            return null;
+        }
+        return null;
+    }
+
+    public User getBuyerTransaction(int transactID){
+        String sql = "SELECT * FROM transactions WHERE transactID=?;";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setInt(1, transactID);
+            ResultSet rSet = pStatement.executeQuery();
+            while(rSet.next()){
+                int userID = rSet.getInt("userID");
+                System.out.println("User ID: " + userID);
+                return getUser(userID);
+            }
+            return null;
+        } catch(SQLException e){
+            System.out.println("SQLException occured on getBuyerTransaction()!");
+            System.out.println(e.getMessage());
+            return null;
         }
     }
 
-    //0 = employee, 1 = client, -1 = invalid;
-    //It is okay not to convert it to user as it only contains 2 values
-    public int checkCredential(String username, String password){
-        User u = getUser(username, password);
-        if (u == null)
-            return -1;
-        else
-            return u.getType();
+    public ArrayList<Transaction> getTransactionsByUser(int userID){ // When retrieving transactions (by userID)
+        String sql = "SELECT transactID FROM transactions WHERE userID=?;";
+        String sql2 = "SELECT * FROM transactions WHERE transactID=?;";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setInt(1, userID);
+            ResultSet rSet = pStatement.executeQuery();
+            ArrayList<Integer> transactIDs = new ArrayList<Integer>();
+            while(rSet.next())
+                transactIDs.add(rSet.getInt("transactID"));
+            pStatement = c.prepareStatement(sql2);
+            ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+            for(int i = 0; i < transactIDs.size(); i++){
+                pStatement.setInt(1, transactIDs.get(i));
+                rSet = pStatement.executeQuery();
+                transactions.add(getTransaction(transactIDs.get(i)));
+            }
+            return transactions;
+        } catch(SQLException e){
+            System.out.println("SQLException occured on getTransactionsByUser()!");
+            System.out.println(e.getMessage());
+            return null;
+        }
+    }
+
+    public Transaction getTransaction(int transactID){ // When retrieving a specific transaction (by ID)
+        String sql = "SELECT * FROM transactions WHERE transactID=?;";
+        Connection c = getConnection();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setInt(1, transactID);
+            ResultSet rSet = pStatement.executeQuery();
+            while(rSet.next()){
+                User u = getUser(rSet.getInt("userID"));
+                ArrayList<Product> items = getTransactItemsByTransactProducts(transactID);
+                return new Transaction(rSet.getInt("transactID"), u, items, rSet.getTimestamp("orderdatetime"));
+            }
+            return null;
+        } catch(SQLException e){
+            System.out.println("SQLException occured on getTransaction()!");
+            System.out.println(e.getMessage());
+            return null;
+        }
+    }
+
+    public ArrayList<Product> getSales(int prodID){
+        ArrayList<TransactionItem> ts = getTransactItemsByProduct(prodID);
+        ArrayList<Product> productsOnly = new ArrayList<Product>();
+        for(int i = 0; i < ts.size(); i++)
+            productsOnly.add(ts.get(i).getProduct());
+        return productsOnly;
+    }
+
+    public ArrayList<Product> getSales(String name){
+        return getSales(getProduct(name).getProdID());
+    }
+
+    private ArrayList<TransactionItem> getTransactItemsByProduct(int prodID){
+        String sql = "SELECT * FROM transaction_item WHERE prodID=?;";
+        Connection c = getConnection();
+        ArrayList<TransactionItem> ti = new ArrayList<TransactionItem>();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setInt(1, prodID);
+            ResultSet rSet = pStatement.executeQuery();
+            while(rSet.next()){
+                Product p = getProduct(rSet.getInt("prodID"));
+                ti.add(new TransactionItem(rSet.getInt("transactID"), p, rSet.getInt("quantity"), rSet.getDouble("subtotal")));
+            }
+            return ti;
+        } catch(SQLException e){
+            System.out.println("SQLException occured on getTransactItemsByTransact()!");
+            System.out.println(e.getMessage());
+            return null;
+        }
+    }
+
+    private ArrayList<TransactionItem> getTransactItemsByTransact(int transactID){
+        String sql = "SELECT * FROM transaction_item WHERE transactID=?;";
+        Connection c = getConnection();
+        ArrayList<TransactionItem> ti = new ArrayList<TransactionItem>();
+        try{
+            PreparedStatement pStatement = c.prepareStatement(sql);
+            pStatement.setInt(1, transactID);
+            ResultSet rSet = pStatement.executeQuery();
+            while(rSet.next()){
+                Product p = getProduct(rSet.getInt("prodID"));
+                ti.add(new TransactionItem(transactID, p, rSet.getInt("quantity"), rSet.getDouble("subtotal")));
+            }
+            return ti;
+        } catch(SQLException e){
+            System.out.println("SQLException occured on getTransactItemsByTransact()!");
+            System.out.println(e.getMessage());
+            return null;
+        }
+    }
+
+    private ArrayList<Product> getTransactItemsByTransactProducts(int transactID){
+        ArrayList<TransactionItem> ti = getTransactItemsByTransact(transactID);
+        ArrayList<Product> productsOnly = new ArrayList<Product>();
+        for(int i = 0; i < ti.size(); i++)
+            productsOnly.add(ti.get(i).getProduct());
+        return productsOnly;
+    }
+
+    public User validateUser(String username, String password){
+        User u = getUser(username);
+        if(u != null)
+            if(u.getPassword().equals(password))
+                return u;
+        return null;
+    }
+
+    public boolean checkUser(String username){
+        if(getUser(username) != null)
+            return true;
+        return false;
     }
 }

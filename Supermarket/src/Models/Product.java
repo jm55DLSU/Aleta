@@ -1,11 +1,20 @@
 package Models;
 
 public class Product {
+    private int id;
     private String name;
     private double price;
     private int quantity;
 
+    public Product(int id, String name, double price, int quantity){
+        this.id = id;
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
+
     public Product(String name, double price, int quantity){
+        this.id = -1;
         this.name = name;
         this.price = price;
         this.quantity = quantity;
@@ -32,6 +41,10 @@ public class Product {
         return this.price - (this.price * discount);
     }
 
+    public int getProdID(){
+        return this.id;
+    }
+
     public String getName(){
         return this.name;
     }
@@ -49,6 +62,10 @@ public class Product {
     }
 
     public String getSummary(){
-        return this.name + " - Php " + this.price + " @ " + this.quantity + "pc(s).";
+        return this.name + " : Php" + String.format("%.2f", this.price) + " @ " + this.quantity + "pc(s).";
+    }
+
+    public void printSummary(){
+        System.out.println(getSummary());
     }
 }

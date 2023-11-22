@@ -20,6 +20,12 @@ public class Popup {
         JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
     }
 
+    public boolean yesno(String title, String question){
+        if(JOptionPane.showConfirmDialog(null, question, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION)
+            return true;
+        return false;
+    }
+
     public User newUser(Controller c){
         JTextField username = new JTextField();
         JPasswordField password1 = new JPasswordField();
@@ -62,7 +68,7 @@ public class Popup {
             if (result == JOptionPane.OK_OPTION) {
                 if(!c.usernameExists(username.getText())){
                     if(String.valueOf(password1.getPassword()).equals(String.valueOf(password2.getPassword()))){
-                        return new User(username.getText(), password1.getPassword().toString(), 1, fullname.getText(), address.getText());
+                        return new User(username.getText(), String.valueOf(password1.getPassword()), 1, fullname.getText(), address.getText());
                     }else{
                         this.warning("New Account", "Passwords don't match!");
                     }

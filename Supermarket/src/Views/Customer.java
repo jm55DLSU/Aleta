@@ -19,7 +19,7 @@ public class Customer extends javax.swing.JPanel{
 
         title = new JLabel();
         title.setText("Supermarket - Welcome " + loggedUser);
-        title.setBounds(0+20,20, 400,40);
+        title.setBounds(0+20,20, 600,40);
         title.setVerticalAlignment(SwingConstants.CENTER);
         title.setHorizontalAlignment(SwingConstants.LEFT);
         title.setFont(v.titleFont);
@@ -102,7 +102,7 @@ public class Customer extends javax.swing.JPanel{
         search.setBounds(800/2+160, 20+(60*1), 200, 40);
         search.setText("Search");
         search.addActionListener(ac);
-        search.setActionCommand("searchProductCommand");
+        search.setActionCommand("searchCustomerProductCommand");
         add(search);
 
         add = new JButton();
@@ -150,6 +150,8 @@ public class Customer extends javax.swing.JPanel{
     }
 
     public int getProductQuantity(){
+        if(quantity.getText().length() == 0)
+            new Popup().warning("Product Quantity", "Please enter a valid quantity value.");
         return Integer.parseInt(quantity.getText());
     }
 

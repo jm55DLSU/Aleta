@@ -1,39 +1,75 @@
 package Models;
 
-import java.security.Timestamp;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 
 public class Transaction {
     private Timestamp orderDateTime;
-    private String buyer;
-    private double subtotal;
-    private String[] items;
+    private User buyer;
+    private ArrayList<Product> items;
+    private int transactID;
 
-    public Transaction(String buyer, double subtotal, String items, String orderDateTime){
+    public Transaction(int transactID, User buyer, ArrayList<Product> items, Timestamp orderDateTime){
+        this.transactID = transactID;
         this.buyer = buyer;
-        this.subtotal = subtotal;
-        this.items = extractItems(items);
+        this.items = items;
+        this.orderDateTime = orderDateTime;
+    }
+
+    public Transaction(User buyer, ArrayList<Product> items){
+        this.transactID = -1;
+        this.buyer = buyer;
+        this.items = items;
+        this.orderDateTime = null;
+    }
+
+    public int getTransactID(){
+        return this.transactID;
     }
 
     public Timestamp getOrderDateTime(){
         return this.orderDateTime;
     }
 
-    public String getBuyer(){
+    public User getBuyer(){
         return this.buyer;
     }
 
     public double getSubtotal(){
-        return this.subtotal;
+        double subtotal = 0;
+        for(int i = 0; i < this.items.size(); i++)
+            subtotal += this.items.get(i).getSubtotal();
+        return subtotal;
     }
 
-    public String[] getItems(){
+    public ArrayList<Product> getItems(){
         return this.items;
     }
 
-    private String[] extractItems(String items){
-        String[] output = items.split(",");
-        for(int i = 0; i < output.length; i++)
-            output[i].replaceAll("\\s+", "");
-        return output;
+    public int getQuantity(){
+        int quantity = 0;
+        for(int i = 0; i < this.items.size(); i++)
+            quantity += this.items.get(i).getQuantity();
+        return quantity;
+    }
+
+    public String getSummary(){
+        return "Order Date & Time: " + this.orderDateTime.toString() + "\nTransaction ID: " + this.transactID + "\nQuantity: " + this.getQuantity() + "\nSubtotal: Php" + this.getSubtotal() + "\n\nItems:\n";
+    }
+
+    public String getVerboseSummary(){
+        String bar = "========================================\n";
+        String output = this.buyer.getSummary() + "\n" + getSummary();
+        for(int i = 0; i < this.items.size(); i++)
+            output += "    - " + this.items.get(i).getSummary() + "\n";
+        return bar + output + bar;
+    }
+
+    public void printVerboseSummary(){
+        System.out.println(getVerboseSummary());
+    }
+
+    public void printSummary(){
+        System.out.println(getSummary());
     }
 }
